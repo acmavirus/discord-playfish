@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AFB - Gold Statistics Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>AFB <span>Gold Dashboard</span></h1>
+            <div id="status" class="status-badge">Live Updates</div>
+        </header>
+
+        <div class="stats-grid">
+            <div class="card glass">
+                <h3>Gold per Sale</h3>
+                <p id="gold-per-sale">$0.00</p>
+            </div>
+            <div class="card glass">
+                <h3>Session Total</h3>
+                <p id="session-total">$0.00</p>
+            </div>
+            <div class="card glass">
+                <h3>Last Sale</h3>
+                <p id="last-update">--:--:--</p>
+            </div>
+        </div>
+
+        <div class="chart-container glass">
+            <canvas id="goldChart"></canvas>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+
+</html>
