@@ -181,11 +181,12 @@ class BaseMenu:
 
             self._config_list = [
                 ('MORE FISH', switcher(self.config.more_fish)),
-                ('MORE TREASURES', switcher(self.config.more_fish)),
+                ('MORE TREASURES', switcher(self.config.more_treasures)),
                 ('AUTO DAILY', switcher(self.config.auto_daily)),
                 ('AUTO SELL', switcher(self.config.auto_sell)),
                 ('AUTO UPDATE INV', switcher(self.config.auto_update_inventory)),
                 ('AUTO BUY BAITS', switcher(self.config.auto_buy_baits)),
+                ('AUTO WORKER', switcher(self.config.auto_worker)),
                 ('FISH ON EXIT', switcher(self.config.fish_on_exit)),
             ]
         return self._config_list

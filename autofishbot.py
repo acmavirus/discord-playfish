@@ -14,6 +14,7 @@ class Receiver:
     session: DiscordWrapper
     config: ConfigManager 
     menu: MainMenu
+    scheduler: Scheduler = None
     
     #Objects
     captcha: Captcha = field(init=False)
@@ -27,7 +28,11 @@ class Receiver:
     
     def __post_init__(self) -> None:
         '''Setups captcha.'''
-        self.captcha = Captcha(api_key=self.config.ocr_api_key, menu=self.menu)
+        self.captcha = Captcha(
+            api_key=self.config.ocr_api_key, 
+            gemini_api_key=self.config.gemini_api_key,
+            menu=self.menu
+        )
     
     @property
     def name(self) -> str:
@@ -43,16 +48,28 @@ class Receiver:
         try:
             e = response['d']
             e_name = response['t']
-            e_channel = e['channel_id']
-            e_author = e['author']['id']
-        except (KeyError, TypeError):
+            
+            if not isinstance(e, dict):
+                return False
+            
+            # For MESSAGE_UPDATE, some fields might be missing.
+            # We must ensure it's from the same channel and potentially the same bot.
+            e_channel = e.get('channel_id')
+            
+            # If channel_id is missing (rare but possible in some updates), 
+            # we rely on the fact that we're only listening for relevant events.
+            if e_channel and e_channel != self.config.channel_id:
+                return False
+                
+            e_author_id = e.get('author', {}).get('id')
+            if e_author_id and e_author_id != APPLICATION_ID:
+                return False
+        except (KeyError, TypeError, AttributeError):
             return False
         
         if e_name in TARGET_EVENT_NAMES:
-            if e_channel == self.config.channel_id:
-                if e_author == APPLICATION_ID:
-                    self.event = e
-                    return True
+            self.event = e
+            return True
         return False
 
     
@@ -87,21 +104,23 @@ class Receiver:
             
             if self.captcha.detected and not self.captcha.regenerating:
                 if self.message.content == 'You may now continue.':
-                    #Captcha bypassed
+                    # Captcha bypassed
                     self.menu.rcv_bypasses += 1
                     self.captcha.reset()
                     self.menu.notify('[*] Captcha bypassed !')
+                    continue
+                elif self.message.content.find('Incorrect code') > -1:
+                    self.menu.notify('[*] Incorrect code.', NotificationPriority.LOW)
+                    continue
                 else:
-                    if self.message.content.find('Incorrect code') > -1:
-                        self.menu.notify('[*] Incorrect code.', NotificationPriority.LOW)
-                        continue
-                    else:
-                        #Message sent by the bot while captcha is detected
-                        debugger.log(self, f'{self.name} - run (Message sent by the AFB while captcha is detected)')
-                        break
+                    # Not a confirmation/failure, might be an update to the captcha message itself
+                    # Try to detect/solve again in case the code just appeared (text captcha update)
+                    if self.captcha.detect(self.event):
+                        self.captcha.solve(self.event)
+                    continue
             elif self.captcha.regenerating:
                 if self.captcha.detect(self.event):
-                    self.captcha.solve()
+                    self.captcha.solve(self.event)
                     continue
                 else:
                     #No detection while regenerating
@@ -110,7 +129,7 @@ class Receiver:
             else:
                 if self.captcha.detect(self.event):
                     self.menu.notify('[!] Captcha detected !', NotificationPriority.NORMAL)
-                    self.captcha.solve()
+                    self.captcha.solve(self.event)
                     continue
                 else:
                     if self.message.title:
@@ -175,6 +194,17 @@ class Receiver:
                                 if self.message.untitled.find('You hired a worker for the next') > -1 \
                                     or self.message.untitled.find('You already have a worker working') > -1:
                                     print(f'[*] {self.message.untitled}')
+                                
+                                # Boost expiration detection
+                                if self.message.untitled.find('fishing boost ended') > -1:
+                                    self.menu.notify('[!] Fishing boost ended! Re-scheduling...', NotificationPriority.HIGH)
+                                    self.scheduler.schedule(self.scheduler.commands.morefish)
+                                elif self.message.untitled.find('treasure boost ended') > -1:
+                                    self.menu.notify('[!] Treasure boost ended! Re-scheduling...', NotificationPriority.HIGH)
+                                    self.scheduler.schedule(self.scheduler.commands.moretreausre)
+                                elif self.message.untitled.find('worker') > -1 and self.message.untitled.find('ended') > -1:
+                                    self.menu.notify('[!] Worker ended! Re-scheduling...', NotificationPriority.HIGH)
+                                    self.scheduler.schedule(self.scheduler.commands.worker)
                             pass
 
         self.is_ready = False
@@ -396,6 +426,8 @@ if __name__ == "__main__":
         config=config, 
         menu=menu,
         captcha=receiver.captcha)
+    
+    receiver.scheduler = scheduler
 
     #Instantiate dispatcher
     dispatcher = Dispatcher(

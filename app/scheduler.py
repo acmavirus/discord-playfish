@@ -76,7 +76,7 @@ class Commands:
         #Buy and sell
         self.sell: CommandType = CommandType('sell', 8*60, 'amount', 'all')#, block_requests=sell_lock)
         self.bait: CommandType = CommandType('buy', bait_cd, 'item', bait_value)
-        self.worker: CommandType = CommandType('buy', ONCE, 'item', 'auto30m')
+        self.worker: CommandType = CommandType('buy', config.worker_length * 60, 'item', f'auto{config.worker_length}m', block_requests=config.auto_worker)
         self.morefish: CommandType = CommandType('buy', boosts_cd, 'item', mf_value, block_requests=mf_lock)
         self.moretreausre: CommandType = CommandType('buy', boosts_cd, 'item', mt_value, block_requests=mt_lock)
         
@@ -276,6 +276,8 @@ class Scheduler:
             self.add(self.commands.morefish, True, False, boosts_delay)
         if self.config.more_treasures:
             self.add(self.commands.moretreausre, True, False, boosts_delay)
+        if self.config.auto_worker:
+            self.add(self.commands.worker, True, False, boosts_delay)
 
         if self.config.auto_buy_baits and self.config.bait:
             self.add(self.commands.bait, True, False, init_delay(5*60, 20*60))

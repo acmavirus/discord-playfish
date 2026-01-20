@@ -43,6 +43,7 @@ class ConfigManager:
     
     #Captcha
     ocr_api_key: str = ''
+    gemini_api_key: str = ''
     #manual_mode: bool = False
     
     #Network
@@ -121,7 +122,8 @@ class ConfigManager:
             self.debug = self.to_bool(system['debug'])
             
             #Captcha
-            self.ocr_api_key = self.to_str(captcha['ocr_api_key'], field='OCR_API_KEY')
+            self.ocr_api_key = self.to_str(captcha.get('ocr_api_key', ''), field='OCR_API_KEY', required=False)
+            self.gemini_api_key = self.to_str(captcha.get('gemini_api_key', ''), field='GEMINI_API_KEY', required=False)
             
             #Network
             self.user_agent = self.to_str(network['user_agent'], required=False)
@@ -139,6 +141,8 @@ class ConfigManager:
             self.auto_buy_baits = self.to_bool(automation['auto_buy_baits'])
             self.auto_sell = self.to_bool(automation['auto_sell'])
             self.auto_update_inventory = self.to_bool(automation['auto_update_inventory'])
+            self.auto_worker = self.to_bool(automation.get('auto_worker', False))
+            self.worker_length = self.to_int(automation.get('worker_length', 10), field='WORKER_LENGTH')
             
             #Menu
             self.compact_mode = self.to_bool(menu['compact_mode'])
@@ -171,7 +175,8 @@ class ConfigManager:
         }
         
         cfg['CAPTCHA'] = {
-            'ocr_api_key': self.ocr_api_key
+            'ocr_api_key': self.ocr_api_key,
+            'gemini_api_key': self.gemini_api_key
         }
         
         cfg['NETWORK'] = {
@@ -190,7 +195,9 @@ class ConfigManager:
             'auto_daily': self.auto_daily,
             'auto_buy_baits': self.auto_buy_baits,
             'auto_sell': self.auto_sell,
-            'auto_update_inventory': self.auto_update_inventory
+            'auto_update_inventory': self.auto_update_inventory,
+            'auto_worker': self.auto_worker,
+            'worker_length': self.worker_length
         }
         
         cfg['MENU'] = {
@@ -255,11 +262,15 @@ class ConfigManager:
         '''Converts and evaluates string values to integer.'''
         if value:
             try:
-                if int(value) > 12.5:
-                    return 20
+                val = int(value)
+                if field == 'BOOSTS_LENGTH':
+                    return 20 if val > 12.5 else 5
+                if field == 'WORKER_LENGTH':
+                    return 30 if val > 20 else 10
+                return val
             except ValueError as e:
                 raise GenericException(f'{field}: {e}')
-        return 5
+        return 5 if field == 'BOOSTS_LENGTH' else 10
 
     def to_float(self, value: any, field: str = None, bd: tuple = (2, 60.0)) -> float:
         '''Converts and evaluates string values to float.'''
