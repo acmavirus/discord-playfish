@@ -33,6 +33,8 @@ var/
 wheels/
 pip-wheel-metadata/
 share/python-wheels/
+/dashboard/stats.json
+test_captcha_mechanisms.py
 *.egg-info/
 .installed.cfg
 *.egg
