@@ -5,8 +5,11 @@ tests
 backups
 dumps
 app/*.json
+app/debug.log
+configs/*.config
 *.code-workspace
 assets/images/logo.png
+list_models.py
 
 
 # Byte-compiled / optimized / DLL files
@@ -26,14 +29,14 @@ downloads/
 eggs/
 .eggs/
 lib/
-lib64/
+lib64/``
 parts/
 sdist/
 var/
 wheels/
 pip-wheel-metadata/
 share/python-wheels/
-/dashboard/stats.json
+dashboard/stats.json
 test_captcha_mechanisms.py
 *.egg-info/
 .installed.cfg
