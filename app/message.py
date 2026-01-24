@@ -49,8 +49,8 @@ class Message:
             if components != []:
                 for component in components[0]['components']:
                     try:
-                        label = component['label']
-                        if label in ['Fish Again']:
+                        label = component.get('label', '')
+                        if label in ['Fish Again', 'Fish', 'Cast Again']:
                             custom_id = component['custom_id']
                         elif label in ['Sell']:
                             sell_id = component['custom_id']
@@ -119,16 +119,18 @@ class Message:
     
     def reset(self) -> None:
         '''Reset values to default.'''
+        self.id: str = None
+        self.play_id: str = None
+        self.sell_id: str = None
         self.title: str = None
         self.description: str = None
         self.content: str = None
         self.items: list[str] = []
         self.untitled: str = None
-        self.sell_id: str = None
         return None
-    
+
     def reset_ids(self) -> None:
-        self.play_id = None
         self.id = None
+        self.play_id = None
         self.sell_id = None
 

@@ -18,7 +18,7 @@ except ImportError:
     GEMINI_AVAILABLE = False
 
 #------------------------ CONSTANTS --------------------------#
-MAX_CAPTCHA_REGENS = 3
+MAX_CAPTCHA_REGENS = 1
 
 #------------------------- CLASSES ---------------------------#
 class UnkownCaptchaError(Exception):
@@ -41,10 +41,8 @@ class Captcha:
     captcha_image: str = None
     
     #Backend
-    _ocr_url: str = field(default='https://api.ocr.space/parse/image', repr=False)
     _word_list: list[str] = field(init=False, repr=False)
     _raw_answers: list[str] = field(default_factory=list)
-    _engines: list[int] = field(init=False, repr=False)
     _max_timeout: int = field(default=20, repr=False)
     _captcha_length: int = 6
     
@@ -56,16 +54,9 @@ class Captcha:
     detected: bool = False
     solving: bool = False
     regenerating: bool = False
-
-    #OCR Settings
-    is_overlay_required: bool = field(default=False, repr=False)
-    detect_orientation: bool = field(default=True, repr=False)
-    scale: bool = field(default=False, repr=False)
-    language: str = field(default='eng', repr=False)
     
     def __post_init__(self) -> None:
         self._word_list = ['captcha', 'verify', 'Anti-bot']
-        self._engines = [2, 1, 3, 5]
     
     @property
     def name(self) -> str:
@@ -84,52 +75,6 @@ class Captcha:
         else:
             return None
     
-    def request(self, engine: int) -> None:
-        #Todo: make this function less complex and better structured
-        '''Makes a request to the OCR api and appends the result (if valid) to the answers list.'''
-        if not self.detected: 
-            return None
-
-        payload = {
-            'apikey': self.api_key,
-            'url': self.captcha_image,
-            'isOverlayRequired': self.is_overlay_required,
-            'detectOrientation': self.detect_orientation,
-            'scale': self.scale,
-            'OCREngine': engine,
-            'language': self.language
-        }
-        
-        try:
-            request = post(self._ocr_url, data=payload, timeout=self._max_timeout)
-            response = loads(request.content.decode())
-        except exceptions.ReadTimeout as e:
-            #Took too long to respond
-            self.menu.notify(f'[!] Engine {engine} took too long to respond.', NotificationPriority.LOW)
-            if engine == self._engines[-1]:
-                self.solving = False
-            debugger.log(e, f'{self.name} - request timeout | {self}')
-            return None
-        except Exception as e:
-            debugger.log(e, f'{self.name} - request')
-            raise UnkownCaptchaError(e)
-        
-        if response['OCRExitCode'] == 1:
-            if self.detected:
-                answer = self.filter(response['ParsedResults'][0]['ParsedText'])
-                if answer:
-                    #To avoid conflicts due to multi-threading, it must not be duplicate, 
-                    #it must not be solved and must be busy (to garatee that the object it's the same)
-                    if answer not in self.answers and self.detected:
-                        self.answers.append(answer)
-                    else:
-                        #Duplicate result
-                        pass
-            
-            if engine == self._engines[-1]:
-                self.solving = False
-            return None     
-
     def gemini_request(self) -> None:
         '''Makes a request to Gemini AI to solve the captcha.'''
         if not self.detected or not self.captcha_image or not GEMINI_AVAILABLE or not self.gemini_api_key:
@@ -154,7 +99,7 @@ class Captcha:
             )
             
             vision_response = client.models.generate_content(
-                model='gemini-3-flash',
+                model='gemini-2.0-flash-exp',
                 contents=[
                     prompt,
                     types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
@@ -243,35 +188,27 @@ class Captcha:
             # Pattern: Code: RRDP
             code_match = re.search(r'Code:\s*([a-zA-Z0-9]{4,8})', clean_text)
             if not code_match:
-                # Pattern: /verify RRDP
-                code_match = re.search(r'/verify\s+([a-zA-Z0-9]{4,8})', clean_text)
+                # Pattern: /verify [code] (Avoid matching "with" which is part of the instruction)
+                code_match = re.search(r'/verify\s+(?!with\b)([a-zA-Z0-9]{4,8})', clean_text)
             
+            # Filter out common instructions/system words
+            blacklist = ['with', 'command', 'using', 'click', 'verify', 'result', 'code', 'please', 'type', 'regen']
             if code_match:
                 code = code_match.group(1)
-                if code.lower() not in ['result', 'code']:
+                if code.lower() not in blacklist:
                     self.answers.append(code)
                     self.menu.notify(f'[*] Extracted code from text: "{code}"')
                     self.solving = False
                     self.busy = False
                     return None
 
-        # 2. Try Gemini first if available
+        # 2. Try Gemini
         if self.captcha_image and GEMINI_AVAILABLE and self.gemini_api_key:
-            gemini_thread = Thread(target=self.gemini_request, daemon=True)
-            gemini_thread.start()
-            # If Gemini is working, we might want to wait a bit or let it run in parallel with OCR
-            # For now, let's run OCR as well for redundancy
-        
-        # 3. Fallback/Parallel OCR if image is present
-        if self.captcha_image:
-            for engine in self._engines:
-                async_request = Thread(target=self.request, args=(engine,), daemon=True)
-                async_request.start()
-                sleep(0.5)
+            self.gemini_request()
         else:
-            if not self.solving: # If Gemini didn't start/is not available
-                self.solving = False
-                self.menu.notify('[!] No captcha image found for OCR.')
+            self.solving = False
+            if not self.captcha_image:
+                self.menu.notify('[!] No captcha image found.')
         
         self.busy = False
         return None

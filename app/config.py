@@ -62,6 +62,8 @@ class ConfigManager:
     auto_buy_baits: bool = False
     auto_sell: bool = False
     auto_update_inventory: bool = False
+    auto_worker: bool = False
+    worker_length: int = 10
     
     #Menu
     compact_mode: bool = False

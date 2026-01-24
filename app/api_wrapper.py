@@ -409,18 +409,19 @@ class DiscordWrapper:
                 #Bad request
                 if status_code == 400:
                     response = loads(request.content)
-                    err_message = f'Code: {status_code}\nResponse: {response}\nRequest: {data}\nHeaders: {headers}'
+                    err_message = f'Code: {status_code} | Response: {response} | Request: {data}'
                     
-                    if int(response['code']) == INVALID_FORM_BODY:
-                        #Non critical, but send slash command instead
-                        #debug - ax0
-                        print(err_message, '\nax0')
+                    if int(response.get('code', 0)) == INVALID_FORM_BODY:
+                        # Non critical, but send slash command instead
+                        # Display a cleaner message to the user
+                        self.menu.notify('[!] Component interaction failed (stale button), falling back to slash command.', NotificationPriority.LOW)
                         debugger.log(err_message, 'ax0')
                         return False
                     else:
-                        #Critial, debbug and exit - ax1
+                        # Critical, debug and exit
                         debugger.log(err_message, 'ax1')
-                        exit(err_message + '\nax1')
+                        self.menu.notify(f'[!] Critical 400 Error: {response.get("message", "Unknown")}', NotificationPriority.HIGH)
+                        return False # Don't exit, just return False to try to recover
                 
                 #Rate limits
                 elif status_code == 429:

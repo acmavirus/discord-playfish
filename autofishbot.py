@@ -295,7 +295,7 @@ class Dispatcher:
                 else:
                     if self.captcha.regens < MAX_CAPTCHA_REGENS:
                         self.captcha.regens += 1
-                        self.menu.notify(f'[!] Regenerating captcha ({self.captcha.regens + 1}/{MAX_CAPTCHA_REGENS})', NotificationPriority.HIGH)
+                        self.menu.notify(f'[!] Regenerating captcha ({self.captcha.regens + 1}/{MAX_CAPTCHA_REGENS + 1})', NotificationPriority.HIGH)
 
                         #This will force a new event to be analyzed by the 
                         #detect() method but also keep the captcha.regens counter
@@ -304,15 +304,11 @@ class Dispatcher:
                         cmd, param = self.make_command('verify', 'answer', 'regen')
                         self.session.request(command=cmd, parameters=param, category=COMMAND)
 
-                        #This sleep timeout might be needed in case of really slow 
-                        #connections, it might be caused by a bad proxy or internet
                         #?Further testing needed
-                        sleep(1)
                     else:
-                        self.menu.notify(f'[!] MAXIMUM CAPTCHA REGENS EXCEEDED, WAITING FOR MANUAL INPUT !', NotificationPriority.VERY_HIGH)
-                        #Max regens attempts exceeded, waits for manual input
-                        while self.captcha.detected:
-                            sleep(1)
+                        self.menu.notify(f'[!] CAPTCHA BYPASS FAILED. EXITING TO PROTECT ACCOUNT!', NotificationPriority.VERY_HIGH)
+                        import os
+                        os._exit(1)
             else:
                 while  self.captcha.busy \
                     or self.captcha.regenerating \
@@ -328,6 +324,8 @@ class Dispatcher:
                             self.session.request(message_id=self.message.id, custom_id=self.message.sell_id, category=BUTTON)
                             # Increased delay between sell and fish to 1.2s - 2.0s to avoid "wait 0.2s" error
                             sleep(uniform(1.2, 2.0))
+                            # Reset IDs after sell to force usage of new IDs from the updated message or slash command
+                            self.message.reset_ids()
 
                         if self.message.play_id:
                             if self.session.request(message_id=self.message.id, custom_id=self.message.play_id, category=BUTTON):
