@@ -354,41 +354,6 @@ class Dispatcher:
                 else:
                     sleep(_delay)
 
-def start_dashboard_server():
-    import http.server
-    import socketserver
-    import os
-
-    PORT = 8080
-    DIRECTORY = "dashboard"
-
-    class Handler(http.server.SimpleHTTPRequestHandler):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, directory=DIRECTORY, **kwargs)
-        
-        def do_GET(self):
-            try:
-                super().do_GET()
-            except (ConnectionAbortedError, ConnectionResetError, ConnectionError):
-                pass
-
-        def log_message(self, format, *args):
-            # Silence server logs to keep terminal clean
-            pass
-
-    if not os.path.exists(DIRECTORY):
-        os.makedirs(DIRECTORY)
-
-    # Use a thread-safe server to avoid blocking and handle errors
-    class ThreadingSimpleServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
-        pass
-
-    try:
-        with ThreadingSimpleServer(("", PORT), Handler) as httpd:
-            httpd.serve_forever()
-    except Exception:
-        pass
-
 #------------------------ INIT --------------------------#
 if __name__ == "__main__":
     print(f'\n[*] Starting...')
@@ -440,14 +405,10 @@ if __name__ == "__main__":
     rcv_thread = Thread(target=receiver.run, daemon=True, name='Receiver')
     sch_thread = Thread(target=scheduler.run, args=(dispatcher,), daemon=True, name='Scheduler')
     dsp_thread = Thread(target=dispatcher.run, daemon=True, name='Dispatcher')
-    dash_thread = Thread(target=start_dashboard_server, daemon=True, name='Dashboard')
     
     rcv_thread.start()
     sch_thread.start()
     dsp_thread.start()
-    dash_thread.start()
-
-    menu.notify('[*] Dashboard live at: http://localhost:8080', NotificationPriority.HIGH)
 
     #Start menu
     menu.run(

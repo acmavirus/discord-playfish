@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from . import *
 from .utils import debugger
-from .stats_manager import stats_manager
 from time import time
 from re import sub
 
@@ -504,7 +503,7 @@ class Profile:
                     self.balance_num = new_balance
                     self.balance = '${:,.2f}'.format(self.balance_num)
                     
-                    stats_manager.add_record(gold_earned)
+                    # gold_earned stats logging removed with dashboard
                     return True
         except Exception as e:
             debugger.log(e, f'{self.name} - receive_sell_message')
