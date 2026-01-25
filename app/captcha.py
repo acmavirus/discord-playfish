@@ -86,7 +86,7 @@ class Captcha:
 
         # Danh sách model thử nghiệm theo thứ tự ưu tiên
         models_to_try = [self.gemini_model]
-        fallbacks = ['gemini-2.0-flash-exp', 'gemini-3-flash', 'gemini-2.0-flash']
+        fallbacks = ['gemini-3-flash', 'gemini-2.0-flash']
         for fb in fallbacks:
             if fb not in models_to_try:
                 models_to_try.append(fb)
