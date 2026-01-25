@@ -109,6 +109,7 @@ class Receiver:
                     self.menu.rcv_bypasses += 1
                     self.captcha.reset()
                     self.menu.notify('[*] Captcha bypassed !')
+                    desktop_notification("Captcha Bypassed!", "The captcha has been successfully bypassed.")
                     continue
                 elif self.message.content.find('Incorrect code') > -1:
                     self.menu.notify('[*] Incorrect code.', NotificationPriority.LOW)
@@ -130,6 +131,7 @@ class Receiver:
             else:
                 if self.captcha.detect(self.event):
                     self.menu.notify('[!] Captcha detected !', NotificationPriority.NORMAL)
+                    desktop_notification("Captcha Detected!", "Autofishbot has detected a captcha. Attempting to solve...")
                     self.captcha.solve(self.event)
                     continue
                 else:
@@ -308,6 +310,7 @@ class Dispatcher:
                         #?Further testing needed
                     else:
                         self.menu.notify(f'[!] CAPTCHA BYPASS FAILED. EXITING TO PROTECT ACCOUNT!', NotificationPriority.VERY_HIGH)
+                        desktop_notification("Captcha Bypass Failed!", "Autofishbot failed to bypass captcha. Exiting to protect your account!")
                         import os
                         os._exit(1)
             else:

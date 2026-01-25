@@ -10,5 +10,5 @@ from .message import Message, MessageCategory
 from .cooldown import CooldownManager
 from .captcha import Captcha, MAX_CAPTCHA_REGENS
 from .profile import Profile
-from .utils import sanitize, dumper, convert_time, debugger
+from .utils import sanitize, dumper, convert_time, debugger, desktop_notification
 from .scheduler import Scheduler, SchStatus, Commands

@@ -50,5 +50,18 @@ class Debugger:
             log_data = f'\n[{convert_time(time())}] {id} | [Traceback] {trace()} | [Event] {event} | [Stack] {stack()}\n'
             dumper('debug.log', log_data, './app', 'a')
 
+def desktop_notification(title: str, message: str):
+    '''Shows a desktop notification if plyer is available.'''
+    try:
+        from plyer import notification
+        notification.notify(
+            title=title,
+            message=message,
+            app_name='Autofishbot',
+            timeout=10
+        )
+    except Exception as e:
+        debugger.log(e, "utils - desktop_notification")
+
 #------------------------- INIT ---------------------------#
 debugger = Debugger()

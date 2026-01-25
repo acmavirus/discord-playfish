@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from . import *
-from .utils import debugger
+from .utils import debugger, desktop_notification
 from .menu import NotificationPriority
 from requests import post, exceptions
 from threading import Thread
@@ -123,6 +123,7 @@ class Captcha:
                         if answer not in self.answers and self.detected:
                             self.answers.append(answer)
                             self.menu.notify(f'[*] Gemini ({model_name}) solved captcha: "{answer}"')
+                            desktop_notification("Captcha Solved!", f"Gemini solved captcha with code: {answer}")
                         success = True
                         break # Thoát vòng lặp nếu thành công
                 except Exception as e:
@@ -219,6 +220,7 @@ class Captcha:
                 if code.lower() not in blacklist:
                     self.answers.append(code)
                     self.menu.notify(f'[*] Extracted code from text: "{code}"')
+                    desktop_notification("Captcha Solved!", f"Extracted code from text: {code}")
                     self.solving = False
                     self.busy = False
                     return None
