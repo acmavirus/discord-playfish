@@ -44,6 +44,7 @@ class ConfigManager:
     #Captcha
     ocr_api_key: str = ''
     gemini_api_key: str = ''
+    gemini_model: str = 'gemini-2.0-flash'
     #manual_mode: bool = False
     
     #Network
@@ -126,6 +127,7 @@ class ConfigManager:
             #Captcha
             self.ocr_api_key = self.to_str(captcha.get('ocr_api_key', ''), field='OCR_API_KEY', required=False)
             self.gemini_api_key = self.to_str(captcha.get('gemini_api_key', ''), field='GEMINI_API_KEY', required=False)
+            self.gemini_model = self.to_str(captcha.get('gemini_model', 'gemini-2.0-flash'), field='GEMINI_MODEL', required=False)
             
             #Network
             self.user_agent = self.to_str(network['user_agent'], required=False)
@@ -178,7 +180,8 @@ class ConfigManager:
         
         cfg['CAPTCHA'] = {
             'ocr_api_key': self.ocr_api_key,
-            'gemini_api_key': self.gemini_api_key
+            'gemini_api_key': self.gemini_api_key,
+            'gemini_model': self.gemini_model
         }
         
         cfg['NETWORK'] = {

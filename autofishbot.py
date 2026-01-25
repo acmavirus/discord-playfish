@@ -31,6 +31,7 @@ class Receiver:
         self.captcha = Captcha(
             api_key=self.config.ocr_api_key, 
             gemini_api_key=self.config.gemini_api_key,
+            gemini_model=self.config.gemini_model,
             menu=self.menu
         )
     
