@@ -11,7 +11,7 @@ from re import sub
 @dataclass(slots=True, frozen=True)
 class MessageCategory:
     '''Essential keyworks to categorize each message title.'''
-    fish: str = 'You caught:'
+    farm: str = 'You farmed:'
     profile: str = 'Inventory of'
     charms: str = 'Charms are found in'
     buffs: str = 'current multipliers'
@@ -50,7 +50,7 @@ class Message:
                 for component in components[0]['components']:
                     try:
                         label = component.get('label', '')
-                        if label in ['Fish Again', 'Fish', 'Cast Again']:
+                        if label in ['Farm Again', 'Farm', 'Harvest', 'Plant Again', 'Plant']:
                             custom_id = component['custom_id']
                         elif label in ['Sell']:
                             sell_id = component['custom_id']
@@ -75,7 +75,7 @@ class Message:
                             self.description = embed['description']
                         except KeyError:
                             pass
-                        if self.title == 'You caught':
+                        if self.title == 'You farmed':
                             break
                     except KeyError:
                         #Untitled

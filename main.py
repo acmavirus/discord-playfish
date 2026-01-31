@@ -137,8 +137,8 @@ class Receiver:
                 else:
                     if self.message.title:
                         #Normal messages
-                        if self.message.title == self.category.fish:
-                            #Fish (/fish or button) messages
+                        if self.message.title == self.category.farm:
+                            #Farm (/play or button) messages
                             self.menu.items = self.message.build()
                             self.menu.rcv_streak += 1
                         elif self.message.title.find(self.category.profile) > -1:
@@ -199,12 +199,12 @@ class Receiver:
                                     print(f'[*] {self.message.untitled}')
                                 
                                 # Boost expiration detection
-                                if self.message.untitled.find('fishing boost ended') > -1:
-                                    self.menu.notify('[!] Fishing boost ended! Re-scheduling...', NotificationPriority.HIGH)
-                                    self.scheduler.schedule(self.scheduler.commands.morefish)
+                                if self.message.untitled.find('farming boost ended') > -1:
+                                    self.menu.notify('[!] Farming boost ended! Re-scheduling...', NotificationPriority.HIGH)
+                                    self.scheduler.schedule(self.scheduler.commands.morefarm)
                                 elif self.message.untitled.find('treasure boost ended') > -1:
                                     self.menu.notify('[!] Treasure boost ended! Re-scheduling...', NotificationPriority.HIGH)
-                                    self.scheduler.schedule(self.scheduler.commands.moretreausre)
+                                    self.scheduler.schedule(self.scheduler.commands.moretreasure)
                                 elif self.message.untitled.find('worker') > -1 and self.message.untitled.find('ended') > -1:
                                     self.menu.notify('[!] Worker ended! Re-scheduling...', NotificationPriority.HIGH)
                                     self.scheduler.schedule(self.scheduler.commands.worker)
@@ -262,10 +262,10 @@ class Dispatcher:
             self.sch.interrupt_break()
         if self.paused:
             self.paused = False
-            self.menu.notify('[*] Autofishbot resumed.')
+            self.menu.notify('[*] Autofarmbot resumed.')
         else:
             self.paused = True
-            self.menu.notify('[*] Autofishbot paused.')
+            self.menu.notify('[*] Autofarmbot paused.')
     
     @property
     def timeout(self) -> float:
@@ -326,7 +326,7 @@ class Dispatcher:
                         # Tight sell cycle: if auto_sell is enabled and sell button is present, click it
                         if self.config.auto_sell and self.message.sell_id:
                             self.session.request(message_id=self.message.id, custom_id=self.message.sell_id, category=BUTTON)
-                            # Increased delay between sell and fish to 1.2s - 2.0s to avoid "wait 0.2s" error
+                            # Increased delay between sell and farm to 1.2s - 2.0s to avoid "wait 0.2s" error
                             sleep(uniform(1.2, 2.0))
                             # Reset IDs after sell to force usage of new IDs from the updated message or slash command
                             self.message.reset_ids()
@@ -339,9 +339,9 @@ class Dispatcher:
                                 # Failed interaction, reset ids to trigger usage of slash commands
                                 self.message.reset_ids()
                         else:
-                            self.session.request(command='fish', category=COMMAND)
+                            self.session.request(command='play', category=COMMAND)
                     else:
-                        self.session.request(command='fish', category=COMMAND)
+                        self.session.request(command='play', category=COMMAND)
 
                     self.in_cooldown = True
                     # Calculate remaining time: target_cd - elapsed_time

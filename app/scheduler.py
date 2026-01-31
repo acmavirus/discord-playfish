@@ -56,12 +56,12 @@ class Commands:
     #Todo: refactor this class later - use cooldown manager to generate base cooldowns dynamically
     def __init__(self, config: ConfigManager) -> None:
         #Builds values strings
-        bait_cd, bait_value = self._make_bait(config)
-        mf_value, mt_value, boosts_cd = self._make_boosts(config.boosts_length)
+        fertilizer_cd, fertilizer_value = self._make_fertilizer(config)
+        mf_value, mq_value, boosts_cd = self._make_boosts(config.boosts_length)
         
         #Commands lock (if automated, user is restricted)
         daily_lock, sell_lock = config.auto_daily, config.auto_sell
-        mf_lock, mt_lock = config.more_fish, config.more_treasures
+        mf_lock, mq_lock = config.more_farm, config.more_quantity
         
         #Info
         self.profile: CommandType = CommandType('profile', 10*60)
@@ -75,16 +75,16 @@ class Commands:
 
         #Buy and sell
         self.sell: CommandType = CommandType('sell', 8*60, 'amount', 'all')#, block_requests=sell_lock)
-        self.bait: CommandType = CommandType('buy', bait_cd, 'item', bait_value)
+        self.fertilizer: CommandType = CommandType('buy', fertilizer_cd, 'item', fertilizer_value)
         self.worker: CommandType = CommandType('buy', config.worker_length * 60, 'item', f'auto{config.worker_length}m', block_requests=config.auto_worker)
-        self.morefish: CommandType = CommandType('buy', boosts_cd, 'item', mf_value, block_requests=mf_lock)
-        self.moretreausre: CommandType = CommandType('buy', boosts_cd, 'item', mt_value, block_requests=mt_lock)
+        self.morefarm: CommandType = CommandType('buy', boosts_cd, 'item', mf_value, block_requests=mf_lock)
+        self.morequantity: CommandType = CommandType('buy', boosts_cd, 'item', mq_value, block_requests=mq_lock)
         
         #Select
         self.select_pet: CommandType = CommandType('pet', DEFAULT, 'selection', config.pet)
         self.select_biome: CommandType = CommandType('biome', DEFAULT, 'selection', config.biome)
-        self.select_bait: CommandType = CommandType('bait', DEFAULT, 'selection', config.pet)
-        self.select_rod: CommandType = CommandType('rod', DEFAULT, 'selection', 'config.rod...')
+        self.select_fertilizer: CommandType = CommandType('fertilizer', DEFAULT, 'selection', config.bait)
+        self.select_hoe: CommandType = CommandType('hoe', DEFAULT, 'selection', 'config.hoe...')
     
     def __iter__(self, command: CommandType = None):
         for key in self.__dict__:
@@ -92,16 +92,16 @@ class Commands:
             yield command
     
     def _make_boosts(self, length: int) -> tuple[str]:
-        return (f'fish{length}m', f'treasure{length}m', length*60)
+        return (f'farm{length}m', f'quantity{length}m', length*60)
     
-    def _make_bait(self, config: ConfigManager) -> tuple[float, str]:
+    def _make_fertilizer(self, config: ConfigManager) -> tuple[float, str]:
         if config.bait:
-            bait_cd = randint(15, 30) * 60
-            bait_amount = round(((bait_cd / config.user_cooldown) - 10) * 0.30, -1)
-            bait_value = f'{config.bait} {int(bait_amount)}'
+            f_cd = randint(15, 30) * 60
+            f_amount = round(((f_cd / config.user_cooldown) - 10) * 0.30, -1)
+            f_value = f'{config.bait} {int(f_amount)}'
         else:
-            bait_cd, bait_value = ONCE, None
-        return (bait_cd, bait_value)
+            f_cd, f_value = ONCE, None
+        return (f_cd, f_value)
 
 @dataclass(slots=True)
 class Scheduler:
@@ -272,15 +272,15 @@ class Scheduler:
             self.add(self.commands.daily, False, False, init_delay())
         
         boosts_delay = init_delay(0, 2*60)
-        if self.config.more_fish:
-            self.add(self.commands.morefish, True, False, boosts_delay)
-        if self.config.more_treasures:
-            self.add(self.commands.moretreausre, True, False, boosts_delay)
+        if self.config.more_farm:
+            self.add(self.commands.morefarm, True, False, boosts_delay)
+        if self.config.more_quantity:
+            self.add(self.commands.morequantity, True, False, boosts_delay)
         if self.config.auto_worker:
             self.add(self.commands.worker, True, False, boosts_delay)
 
         if self.config.auto_buy_baits and self.config.bait:
-            self.add(self.commands.bait, True, False, init_delay(5*60, 20*60))
+            self.add(self.commands.fertilizer, True, False, init_delay(5*60, 20*60))
         
         if self.config.auto_sell:
             self.add(self.commands.sell, True, False, init_delay(5*60, 15*60))

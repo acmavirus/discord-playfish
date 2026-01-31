@@ -56,9 +56,9 @@ class ConfigManager:
     
     #Automation
     boosts_length: int = 5
-    more_fish: bool = False
-    more_treasures: bool = False
-    fish_on_exit: bool = False
+    more_farm: bool = False
+    more_quantity: bool = False
+    farm_on_exit: bool = False
     auto_daily: bool = False
     auto_buy_baits: bool = False
     auto_sell: bool = False
@@ -138,9 +138,9 @@ class ConfigManager:
             
             #Automation
             self.boosts_length = self.to_int(automation['boosts_length'], field='BOOSTS_LENGTH')
-            self.more_fish = self.to_bool(automation['more_fish'])
-            self.more_treasures = self.to_bool(automation['more_treasures'])
-            self.fish_on_exit = self.to_bool(automation['fish_on_exit'])
+            self.more_farm = self.to_bool(automation['more_farm'])
+            self.more_quantity = self.to_bool(automation['more_quantity'])
+            self.farm_on_exit = self.to_bool(automation['farm_on_exit'])
             self.auto_daily = self.to_bool(automation['auto_daily'])
             self.auto_buy_baits = self.to_bool(automation['auto_buy_baits'])
             self.auto_sell = self.to_bool(automation['auto_sell'])
@@ -194,9 +194,9 @@ class ConfigManager:
         
         cfg['AUTOMATION'] = {
             'boosts_length': self.boosts_length,
-            'more_fish': self.more_fish,
-            'more_treasures': self.more_treasures,
-            'fish_on_exit': self.fish_on_exit,
+            'more_farm': self.more_farm,
+            'more_quantity': self.more_quantity,
+            'farm_on_exit': self.farm_on_exit,
             'auto_daily': self.auto_daily,
             'auto_buy_baits': self.auto_buy_baits,
             'auto_sell': self.auto_sell,
@@ -269,7 +269,7 @@ class ConfigManager:
             try:
                 val = int(value)
                 if field == 'BOOSTS_LENGTH':
-                    return 20 if val > 12.5 else 5
+                    return 15 if val > 10 else 5
                 if field == 'WORKER_LENGTH':
                     return 30 if val > 20 else 10
                 return val
