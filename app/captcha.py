@@ -57,7 +57,7 @@ class Captcha:
     regenerating: bool = False
     
     def __post_init__(self) -> None:
-        self._word_list = ['captcha', 'verify', 'Anti-bot']
+        self._word_list = ['captcha', 'verify', 'Anti-bot', 'Antibot']
     
     @property
     def name(self) -> str:
@@ -209,6 +209,10 @@ class Captcha:
             
             # Pattern: Code: RRDP
             code_match = re.search(r'Code:\s*([a-zA-Z0-9]{4,8})', clean_text)
+            if not code_match:
+                # Pattern: playing: pMbn
+                code_match = re.search(r'playing:\s*([a-zA-Z0-9]{4,8})', clean_text)
+            
             if not code_match:
                 # Pattern: /verify [code] (Avoid matching "with" which is part of the instruction)
                 code_match = re.search(r'/verify\s+(?!with\b)([a-zA-Z0-9]{4,8})', clean_text)

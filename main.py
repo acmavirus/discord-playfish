@@ -289,7 +289,7 @@ class Dispatcher:
                     try:
                         answer = self.captcha.answers.pop()
                         self.menu.notify(f'[!] Attempting code: "{answer}".')
-                        cmd, param = self.make_command('verify', 'answer', answer)
+                        cmd, param = self.make_command('verify', 'code', answer)
                         self.session.request(command=cmd, parameters=param, category=COMMAND)
                         
                         sleep(self.timeout)
@@ -304,7 +304,7 @@ class Dispatcher:
                         #detect() method but also keep the captcha.regens counter
                         self.captcha.regenerating = True
                         
-                        cmd, param = self.make_command('verify', 'answer', 'regen')
+                        cmd, param = self.make_command('verify', 'code', 'regen')
                         self.session.request(command=cmd, parameters=param, category=COMMAND)
 
                         #?Further testing needed
