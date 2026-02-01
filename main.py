@@ -349,9 +349,9 @@ class Dispatcher:
                                 # Failed interaction, reset ids to trigger usage of slash commands
                                 self.message.reset_ids()
                         else:
-                            self.session.request(command='play', category=COMMAND)
+                            self.session.request(command='farm', category=COMMAND)
                     else:
-                        self.session.request(command='play', category=COMMAND)
+                        self.session.request(command='farm', category=COMMAND)
 
                     self.in_cooldown = True
                     # Calculate remaining time: target_cd - elapsed_time
