@@ -412,15 +412,19 @@ class DiscordWrapper:
                     err_message = f'Code: {status_code} | Response: {response} | Request: {data}'
                     
                     if int(response.get('code', 0)) == INVALID_FORM_BODY:
+                        # Display detailed error info for debugging
+                        errors = response.get('errors', {})
+                        self.menu.notify(f'[!] Invalid Form Body (400): {errors}', NotificationPriority.HIGH)
+                        debugger.log(f'INVALID_FORM_BODY: {errors} | Payload: {dumps(data)}', 'ax0')
+                        
                         # Non critical, but send slash command instead
-                        # Display a cleaner message to the user
-                        self.menu.notify('[!] Component interaction failed (stale button), falling back to slash command.', NotificationPriority.LOW)
-                        debugger.log(err_message, 'ax0')
+                        self.menu.notify('[!] Component interaction failed, falling back to slash command.', NotificationPriority.LOW)
                         return False
                     else:
                         # Critical, debug and exit
+                        msg = response.get("message", "Unknown")
+                        self.menu.notify(f'[!] Critical 400 Error: {msg}', NotificationPriority.HIGH)
                         debugger.log(err_message, 'ax1')
-                        self.menu.notify(f'[!] Critical 400 Error: {response.get("message", "Unknown")}', NotificationPriority.HIGH)
                         return False # Don't exit, just return False to try to recover
                 
                 #Rate limits

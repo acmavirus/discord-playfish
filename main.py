@@ -104,7 +104,9 @@ class Receiver:
             self.message.make(self.event)
             
             if self.captcha.detected and not self.captcha.regenerating:
-                if self.message.content == 'You may now continue.':
+                # Check for success message (handling emojis like ✅)
+                if 'You may now continue' in self.message.content or \
+                   'You currently do not have an active captcha' in self.message.content:
                     # Captcha bypassed
                     self.menu.rcv_bypasses += 1
                     self.captcha.reset()
@@ -121,6 +123,14 @@ class Receiver:
                         self.captcha.solve(self.event)
                     continue
             elif self.captcha.regenerating:
+                # Check if the "new event" is actually a success message (e.g. if we sent regen but it was already solved)
+                if 'You may now continue' in self.message.content or \
+                   'You currently do not have an active captcha' in self.message.content:
+                     self.menu.rcv_bypasses += 1
+                     self.captcha.reset()
+                     self.menu.notify('[*] Captcha bypassed (during regen check)!')
+                     continue
+
                 if self.captcha.detect(self.event):
                     self.captcha.solve(self.event)
                     continue
@@ -289,7 +299,7 @@ class Dispatcher:
                     try:
                         answer = self.captcha.answers.pop()
                         self.menu.notify(f'[!] Attempting code: "{answer}".')
-                        cmd, param = self.make_command('verify', 'code', answer)
+                        cmd, param = self.make_command('verify', 'answer', answer)
                         self.session.request(command=cmd, parameters=param, category=COMMAND)
                         
                         sleep(self.timeout)
@@ -304,7 +314,7 @@ class Dispatcher:
                         #detect() method but also keep the captcha.regens counter
                         self.captcha.regenerating = True
                         
-                        cmd, param = self.make_command('verify', 'code', 'regen')
+                        cmd, param = self.make_command('verify', 'answer', 'regen')
                         self.session.request(command=cmd, parameters=param, category=COMMAND)
 
                         #?Further testing needed
