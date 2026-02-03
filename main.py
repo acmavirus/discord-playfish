@@ -171,9 +171,17 @@ class Receiver:
                             #Leaderboard (/pos) messages
                             self.profile.leaderboard.update(self.message.description)
                             self.menu.notify('[*] Leaderboards updated.')
-                        #Todo: read '... boost ended' message and inform scheduler (?)
-                        #Your fishing boost ended!
-                        #Your treasure boost ended!
+                        # Detect boost expiration in titled messages
+                        elif self.message.title.lower().find('boost ended') > -1:
+                            self.menu.notify(f'[!] {self.message.title}!', NotificationPriority.HIGH)
+                            desktop_notification("Boost Ended!", f"{self.message.title}")
+                            
+                            if 'fish' in self.message.title.lower() or 'farm' in self.message.title.lower():
+                                self.scheduler.schedule(self.scheduler.commands.morefarm)
+                            elif 'treasure' in self.message.title.lower():
+                                self.scheduler.schedule(self.scheduler.commands.moretreasure)
+                            elif 'quantity' in self.message.title.lower():
+                                self.scheduler.schedule(self.scheduler.commands.morequantity)
                         else:
                             #Unhandled titled message
                             self.menu.notify(f'{sanitize(self.message.title)}: {sanitize(self.message.description)}')
@@ -211,13 +219,23 @@ class Receiver:
                                 # Boost expiration detection
                                 if self.message.untitled.find('farming boost ended') > -1:
                                     self.menu.notify('[!] Farming boost ended! Re-scheduling...', NotificationPriority.HIGH)
+                                    desktop_notification("Boost Ended!", "Farming boost has ended. Re-scheduling...")
                                     self.scheduler.schedule(self.scheduler.commands.morefarm)
                                 elif self.message.untitled.find('treasure boost ended') > -1:
                                     self.menu.notify('[!] Treasure boost ended! Re-scheduling...', NotificationPriority.HIGH)
+                                    desktop_notification("Boost Ended!", "Treasure boost has ended. Re-scheduling...")
                                     self.scheduler.schedule(self.scheduler.commands.moretreasure)
+                                elif self.message.untitled.find('quantity boost ended') > -1:
+                                    self.menu.notify('[!] Quantity boost ended! Re-scheduling...', NotificationPriority.HIGH)
+                                    desktop_notification("Boost Ended!", "Quantity boost has ended. Re-scheduling...")
+                                    self.scheduler.schedule(self.scheduler.commands.morequantity)
                                 elif self.message.untitled.find('worker') > -1 and self.message.untitled.find('ended') > -1:
                                     self.menu.notify('[!] Worker ended! Re-scheduling...', NotificationPriority.HIGH)
+                                    desktop_notification("Worker Ended!", "Worker has ended. Re-scheduling...")
                                     self.scheduler.schedule(self.scheduler.commands.worker)
+                                elif self.message.untitled.lower().find('boost has ended') > -1:
+                                    self.menu.notify(f'[!] Boost ended: {self.message.untitled}', NotificationPriority.HIGH)
+                                    desktop_notification("Boost Ended!", f"A boost has ended: {self.message.untitled}")
                             pass
 
         self.is_ready = False
