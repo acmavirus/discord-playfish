@@ -122,10 +122,22 @@ logs.txt
 # Local configuration
 *.local
 
-# Tokens file
+# Tokens and Secrets
 **/tokens.txt
-updatediscord.md
+.env
+.env.*
+!.env.example
 
-# External Projects
+# Config files (Contain Webhooks/Sensitive info)
+config/*.json
+!config/misc.json
+!config/*.json.example
+
+# User Data and Persistence
+utils/stats.json
+utils/data/
+
+# External Projects and Extras
 owofarmbot_stable/
 owofarmbot_stable
+updatediscord.md
