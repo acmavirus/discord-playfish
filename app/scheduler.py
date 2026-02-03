@@ -53,55 +53,24 @@ class CommandType:
 
 
 class Commands:
-    #Todo: refactor this class later - use cooldown manager to generate base cooldowns dynamically
     def __init__(self, config: ConfigManager) -> None:
-        #Builds values strings
-        fertilizer_cd, fertilizer_value = self._make_fertilizer(config)
-        mf_value, mq_value, boosts_cd = self._make_boosts(config.boosts_length)
-        
-        #Commands lock (if automated, user is restricted)
-        daily_lock, sell_lock = config.auto_daily, config.auto_sell
-        mf_lock, mq_lock = config.more_farm, config.more_quantity
-        
-        #Info
+        # Info
         self.profile: CommandType = CommandType('profile', 10*60)
-        self.pos: CommandType = CommandType('pos')
-        self.quests: CommandType = CommandType('quests')
-        self.charms: CommandType = CommandType('charms')
-        self.buffs: CommandType = CommandType('buffs')
-        self.show_rods: CommandType = CommandType('rod')
-        self.show_biomes: CommandType = CommandType('biome')
-        self.daily: CommandType = CommandType('daily', ONCE, block_requests=daily_lock)
+        self.daily: CommandType = CommandType('daily', ONCE, block_requests=config.auto_daily)
 
-        #Buy and sell
-        self.sell: CommandType = CommandType('sell', 8*60, 'amount', 'all')#, block_requests=sell_lock)
-        self.fertilizer: CommandType = CommandType('buy', fertilizer_cd, 'item', fertilizer_value)
-        self.worker: CommandType = CommandType('buy', config.worker_length * 60, 'item', f'auto{config.worker_length}m', block_requests=config.auto_worker)
-        self.morefarm: CommandType = CommandType('buy', boosts_cd, 'item', mf_value, block_requests=mf_lock)
-        self.morequantity: CommandType = CommandType('buy', boosts_cd, 'item', mq_value, block_requests=mq_lock)
+        # OwO Commands
+        self.hunt: CommandType = CommandType('hunt', 15 + uniform(1, 5), block_requests=config.auto_hunt)
+        self.battle: CommandType = CommandType('battle', 15 + uniform(1, 5), block_requests=config.auto_battle)
+        self.pray: CommandType = CommandType('pray', 301 + uniform(1, 10), block_requests=config.auto_pray)
         
-        #Select
+        # Select
         self.select_pet: CommandType = CommandType('pet', DEFAULT, 'selection', config.pet)
-        self.select_biome: CommandType = CommandType('biome', DEFAULT, 'selection', config.biome)
-        self.select_fertilizer: CommandType = CommandType('fertilizer', DEFAULT, 'selection', config.bait)
-        self.select_hoe: CommandType = CommandType('hoe', DEFAULT, 'selection', 'config.hoe...')
-    
-    def __iter__(self, command: CommandType = None):
+
+    def __iter__(self):
         for key in self.__dict__:
             command = self.__dict__.get(key)
-            yield command
-    
-    def _make_boosts(self, length: int) -> tuple[str]:
-        return (f'farm{length}m', f'quantity{length}m', length*60)
-    
-    def _make_fertilizer(self, config: ConfigManager) -> tuple[float, str]:
-        if config.bait:
-            f_cd = randint(15, 30) * 60
-            f_amount = round(((f_cd / config.user_cooldown) - 10) * 0.30, -1)
-            f_value = f'{config.bait} {int(f_amount)}'
-        else:
-            f_cd, f_value = ONCE, None
-        return (f_cd, f_value)
+            if isinstance(command, CommandType):
+                yield command
 
 @dataclass(slots=True)
 class Scheduler:
@@ -228,6 +197,7 @@ class Scheduler:
                     sleep(self.waiting_time)
                     
                     cmd, data = command.data
+                    self.menu.notify(f"Sending command: {cmd}")
                     self.session.request(command=cmd, parameters=data)
 
                     if not persist:
@@ -271,22 +241,12 @@ class Scheduler:
         if self.config.auto_daily:
             self.add(self.commands.daily, False, False, init_delay())
         
-        boosts_delay = init_delay(0, 2*60)
-        if self.config.more_farm:
-            self.add(self.commands.morefarm, True, False, boosts_delay)
-        if self.config.more_quantity:
-            self.add(self.commands.morequantity, True, False, boosts_delay)
-        if self.config.auto_worker:
-            self.add(self.commands.worker, True, False, boosts_delay)
-
-        if self.config.auto_buy_baits and self.config.bait:
-            self.add(self.commands.fertilizer, True, False, init_delay(5*60, 20*60))
-        
-        if self.config.auto_sell:
-            self.add(self.commands.sell, True, False, init_delay(5*60, 15*60))
-
-        if self.config.auto_update_inventory:
-            self.add(self.commands.profile, True, False, init_delay(20, 3*60))
+        if self.config.auto_hunt:
+            self.add(self.commands.hunt, True, False, init_delay(1, 15))
+        if self.config.auto_battle:
+            self.add(self.commands.battle, True, False, init_delay(1, 15))
+        if self.config.auto_pray:
+            self.add(self.commands.pray, True, False, init_delay(1, 300))
 
     def schedule(self, command: CommandType) -> bool:
         '''Schedules new tasks to the queue, must be called ONLY by user input.

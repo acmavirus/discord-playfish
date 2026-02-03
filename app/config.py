@@ -12,7 +12,7 @@ from sys import argv
 
 
 #------------------------ CONSTANTS --------------------------#
-REPO_CONFIG = 'https://github.com/thejoabo/virtualfisher-bot/blob/main/assets/template.config'
+REPO_CONFIG = 'https://github.com/TheAxes/Advance-Auto-Owo'
 
 
 #------------------------- CLASSES ---------------------------#
@@ -55,16 +55,11 @@ class ConfigManager:
     proxy_auth_password: str = ''
     
     #Automation
-    boosts_length: int = 5
-    more_farm: bool = False
-    more_quantity: bool = False
-    farm_on_exit: bool = False
     auto_daily: bool = False
-    auto_buy_baits: bool = False
-    auto_sell: bool = False
-    auto_update_inventory: bool = False
-    auto_worker: bool = False
-    worker_length: int = 10
+    auto_hunt: bool = False
+    auto_battle: bool = False
+    auto_pray: bool = False
+    webhook_url: str = ''
     
     #Menu
     compact_mode: bool = False
@@ -137,26 +132,19 @@ class ConfigManager:
             self.proxy_auth_password = self.to_str(network['proxy_auth_password'], required=False)
             
             #Automation
-            self.boosts_length = self.to_int(automation['boosts_length'], field='BOOSTS_LENGTH')
-            self.more_farm = self.to_bool(automation['more_farm'])
-            self.more_quantity = self.to_bool(automation['more_quantity'])
-            self.farm_on_exit = self.to_bool(automation['farm_on_exit'])
-            self.auto_daily = self.to_bool(automation['auto_daily'])
-            self.auto_buy_baits = self.to_bool(automation['auto_buy_baits'])
-            self.auto_sell = self.to_bool(automation['auto_sell'])
-            self.auto_update_inventory = self.to_bool(automation['auto_update_inventory'])
-            self.auto_worker = self.to_bool(automation.get('auto_worker', False))
-            self.worker_length = self.to_int(automation.get('worker_length', 10), field='WORKER_LENGTH')
+            self.auto_daily = self.to_bool(automation.get('auto_daily', False))
+            self.auto_hunt = self.to_bool(automation.get('auto_hunt', False))
+            self.auto_battle = self.to_bool(automation.get('auto_battle', False))
+            self.auto_pray = self.to_bool(automation.get('auto_pray', False))
+            self.webhook_url = self.to_str(automation.get('webhook_url', ''), field='WEBHOOK_URL', required=False)
             
             #Menu
             self.compact_mode = self.to_bool(menu['compact_mode'])
             self.log_mode = self.to_bool(menu.get('log_mode', False))
             self.refresh_rate = self.to_float(menu['refresh_rate'], field='REFRESH_RATE', bd=(0.1, 1))
             
-            #Cosmetic
-            self.pet = self.to_str(cosmetics['pet'], False)
-            self.bait = self.to_str(cosmetics['bait'], False)
-            self.biome = self.to_str(cosmetics['biome'], False)
+            #Cosmetic (Keep generic if needed, but remove specifics)
+            self.pet = self.to_str(cosmetics.get('pet', ''), False)
         except KeyError as e:
             self.err_dialog(f'[E] Err -> {e} key missing | Outdated config file.')
         except (MissingRequiredFieldError, 
@@ -193,16 +181,11 @@ class ConfigManager:
         }
         
         cfg['AUTOMATION'] = {
-            'boosts_length': self.boosts_length,
-            'more_farm': self.more_farm,
-            'more_quantity': self.more_quantity,
-            'farm_on_exit': self.farm_on_exit,
             'auto_daily': self.auto_daily,
-            'auto_buy_baits': self.auto_buy_baits,
-            'auto_sell': self.auto_sell,
-            'auto_update_inventory': self.auto_update_inventory,
-            'auto_worker': self.auto_worker,
-            'worker_length': self.worker_length
+            'auto_hunt': self.auto_hunt,
+            'auto_battle': self.auto_battle,
+            'auto_pray': self.auto_pray,
+            'webhook_url': self.webhook_url
         }
         
         cfg['MENU'] = {
@@ -212,9 +195,7 @@ class ConfigManager:
         }
         
         cfg['COSMETIC'] = {
-            'pet': self.pet,
-            'bait': self.bait,
-            'biome': self.biome
+            'pet': self.pet
         }
 
         try:

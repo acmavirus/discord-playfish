@@ -63,5 +63,28 @@ def desktop_notification(title: str, message: str):
     except Exception as e:
         debugger.log(e, "utils - desktop_notification")
 
+def send_webhook(url: str, title: str, description: str, color: int = 16711680):
+    '''Sends a message to a Discord Webhook.'''
+    if not url:
+        return
+    
+    try:
+        from requests import post
+        import json
+        
+        data = {
+            "embeds": [
+                {
+                    "title": title,
+                    "description": description,
+                    "color": color,
+                    "timestamp": datetime.now().isoformat()
+                }
+            ]
+        }
+        post(url, data=json.dumps(data), headers={"Content-Type": "application/json"})
+    except Exception as e:
+        debugger.log(e, "utils - send_webhook")
+
 #------------------------- INIT ---------------------------#
 debugger = Debugger()
