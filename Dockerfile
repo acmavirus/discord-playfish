@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Expose port for dashboard
-EXPOSE 2000
+EXPOSE 1200
 
 # Command to run the bot
 CMD ["python", "mizu.py"]
