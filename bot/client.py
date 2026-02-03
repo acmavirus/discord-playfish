@@ -92,6 +92,7 @@ class MyClient(commands.Bot):
                 "last_ran": 0
             }
         }
+        self.session_start = time.time()
         for key in self.misc["command_info"]:
             self.cmds_state[key] = {
                 "in_queue": False,
@@ -538,20 +539,25 @@ class MyClient(commands.Bot):
             self.add_dashboard_log("system", f"Error toggling {command.upper()}: {e}", "error")
 
     def random_float(self, cooldown_list):
-        return self.random.uniform(cooldown_list[0],cooldown_list[1])
+        # Thêm một chút nhiễu ngẫu nhiên vào các giá trị cấu hình
+        base = self.random.uniform(cooldown_list[0],cooldown_list[1])
+        extra_noise = self.random.uniform(0.05, 0.2)
+        return base + extra_noise
 
-    async def sleep_till(self, cooldown, cd_list=True, noise=3):
+    async def sleep_till(self, cooldown, cd_list=True, noise=4.5):
+        # Cơ chế mệt mỏi (Fatigue): Chạy càng lâu, phản xạ càng chậm
+        session_duration = (time.time() - self.session_start) / 3600 # hours
+        fatigue_factor = min(session_duration * 0.5, 2.5) # Max 2.5s cộng thêm sau mỗi giờ
+        
         if cd_list:
-            await asyncio.sleep(
-                self.random.uniform(cooldown[0],cooldown[1])
-            )
+            base_sleep = self.random.uniform(cooldown[0],cooldown[1])
+            # Thêm độ trễ biến thiên cao cho "giống người"
+            human_variance = self.random.uniform(0.5, 1.8) if self.random.random() < 0.2 else self.random.uniform(0.1, 0.4)
+            await asyncio.sleep(base_sleep + human_variance + fatigue_factor)
         else:
-            await asyncio.sleep(
-                self.random.uniform(
-                    cooldown,
-                    cooldown + noise
-                )
-            )
+            # Noise mặc định tăng lên để tránh bị bắt bài
+            actual_noise = self.random.uniform(1.0, noise + fatigue_factor)
+            await asyncio.sleep(cooldown + actual_noise)
 
     async def upd_cmd_state(self, id, reactionBot=False):
         async with self.lock:
@@ -741,6 +747,12 @@ class MyClient(commands.Bot):
                 
         if not self.command_handler_status["captcha"] or bypass:
             await self.wait_until_ready()
+            
+            # 1. Thinking time (Phản ứng trước khi bắt đầu gõ)
+            # Một người bình thường sẽ mất 0.5s - 1.5s để quyết định gõ gì đó
+            thinking_time = self.random.uniform(0.6, 2.2)
+            await asyncio.sleep(thinking_time)
+
             if typingIndicator:
                 # Human-like typing calculation
                 # Average typing speed: 300 CPM (Characters Per Minute) -> 5 chars per second
@@ -748,19 +760,27 @@ class MyClient(commands.Bot):
                 # Typing time = (Length / 5) * random_variance
                 
                 char_length = len(msg)
-                base_reaction = self.random.uniform(0.5, 1.2)
-                typing_speed_variance = self.random.uniform(0.8, 1.3)
-                estimated_typing_time = (char_length / 6.0) * typing_speed_variance
+                # Tăng tính ngẫu nhiên cho tốc độ gõ
+                typing_speed_base = 6.5 # Tăng tốc độ cơ sở một chút nhưng biến động cao hơn
+                typing_speed_variance = self.random.uniform(0.7, 1.4)
+                estimated_typing_time = (char_length / typing_speed_base) * typing_speed_variance
                 
-                total_delay = base_reaction + estimated_typing_time
-                
+                # Biến động thêm: thỉnh thoảng gõ chậm lại (mô phỏng suy nghĩ giữa chừng)
+                if char_length > 10 and self.random.random() < 0.3:
+                    estimated_typing_time += self.random.uniform(0.5, 1.5)
+
                 # Cap delay to avoid overly slow responses for long messages
-                total_delay = min(total_delay, 4.0)
-                
-                # await self.log(f"Typing... ({total_delay:.2f}s)", "#888888")
+                total_delay = min(total_delay if 'total_delay' in locals() else estimated_typing_time, 5.0)
                 
                 async with channel.typing():
-                    await asyncio.sleep(total_delay)
+                    # Thỉnh thoảng gõ có ngắt quãng
+                    if total_delay > 2.0 and self.random.random() < 0.2:
+                        await asyncio.sleep(total_delay * 0.4)
+                        await asyncio.sleep(self.random.uniform(0.3, 0.8)) # Nghỉ một chút
+                        await asyncio.sleep(total_delay * 0.6)
+                    else:
+                        await asyncio.sleep(total_delay)
+                    
                     await channel.send(msg, silent=silent)
             else:
                 await channel.send(msg, silent=silent)

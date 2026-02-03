@@ -51,7 +51,7 @@ class Pray(commands.Cog):
         if not self.startup:
             await self.bot.remove_queue(id="pray")
             await self.bot.log(f"removed {cmd} from queue", "#d0ff78")
-            await self.bot.sleep_till(cnf["cooldown"])
+            await self.bot.sleep_till(cnf["cooldown"], noise=self.bot.random.uniform(10.0, 25.0))
             self.__dict__[f"{cmd}_cmd"]["checks"] = True
         else:
             await self.bot.sleep_till(self.bot.settings_dict["defaultCooldowns"]["shortCooldown"])

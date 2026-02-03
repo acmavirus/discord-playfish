@@ -26,7 +26,7 @@ class Owo(commands.Cog):
         if not startup:
             await self.bot.remove_queue(id="owo")
             self.owo_ongoing = True
-            await self.bot.sleep_till(self.bot.settings_dict["commands"]["owo"]["cooldown"])
+            await self.bot.sleep_till(self.bot.settings_dict["commands"]["owo"]["cooldown"], noise=self.bot.random.uniform(5.5, 12.0))
             self.owo_ongoing = False
         await self.bot.put_queue(cmd, quick=True)
             

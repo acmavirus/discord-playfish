@@ -105,11 +105,19 @@ class Commands(commands.Cog):
             if priority != 0:
                 while (time.time() - self.bot.cmds_state["global"]["last_ran"]) < cnf["betweenCommands"][0]:
                     await self.bot.sleep_till(cnf["betweenCommands"])
+                
+                # Thêm "Thinking delay" bổ sung sau khi cooldown đã hết
+                # Ngẫu nhiên thêm 0.3s đến 1.2s để phá vỡ nhịp điệu cố định
+                extra_thinking = self.bot.random.uniform(0.3, 1.2)
+                if self.bot.random.random() < 0.15: # 15% khả năng bị "phân tâm" lâu hơn
+                    extra_thinking += self.bot.random.uniform(1.0, 3.5)
+                await asyncio.sleep(extra_thinking)
 
             sleep_req, sleep_time = self.sleep_required()
             if sleep_req:
                 await self.bot.log(f"sleep required by {sleep_time}s (to prevent `slow down` message)", "#8f6b09")
-                await self.bot.sleep_till([sleep_time, sleep_time+0.4])
+                # Tăng biên độ an toàn cho sleep_till
+                await self.bot.sleep_till([sleep_time + 0.2, sleep_time + 1.2])
                 self.command_times.clear()
 
             

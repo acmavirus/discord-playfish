@@ -70,7 +70,7 @@ class Battle(commands.Cog):
                                 self.bot.add_dashboard_log("battle", "Battle paused - No gems available", "warning")
                                 return
                                 
-                            await self.bot.sleep_till(self.bot.settings_dict["commands"]["battle"]["cooldown"])
+                            await self.bot.sleep_till(self.bot.settings_dict["commands"]["battle"]["cooldown"], noise=self.bot.random.uniform(2.0, 6.5))
                             self.cmd["cmd_name"] = (
                                 self.bot.alias["battle"]["shortform"] 
                                 if self.bot.settings_dict["commands"]["battle"]["useShortForm"] 
