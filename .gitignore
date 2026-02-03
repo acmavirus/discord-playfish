@@ -1,7 +1,0 @@
-# Development only
-venv
-dashboard/stats.json
-configs/*.config
-app/*.json
-app/debug.log
-app/__pycache__
