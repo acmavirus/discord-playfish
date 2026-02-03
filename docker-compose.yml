@@ -1,0 +1,16 @@
+# Copyright by AcmaTvirus
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    container_name: virtualfarmer-bot
+    volumes:
+      - ./configs:/app/configs
+      - ./app/debug.log:/app/app/debug.log
+    restart: unless-stopped
+    environment:
+      - DOCKER_CONTAINER=true
+    stdin_open: true # Equivalent to -i
+    tty: true        # Equivalent to -t
+    command: acmatvirus.config

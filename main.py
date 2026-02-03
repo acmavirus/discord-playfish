@@ -396,7 +396,8 @@ if __name__ == "__main__":
     debugger.setup(config.debug)
     
     #Instantiate menu
-    if config.log_mode:
+    import os
+    if config.log_mode or os.environ.get("DOCKER_CONTAINER"):
         menu = LogMenu()
     elif config.compact_mode:
         menu = CompactMenu()

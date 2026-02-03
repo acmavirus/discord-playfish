@@ -1,0 +1,16 @@
+# Copyright by AcmaTvirus
+.git
+.gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.db
+.agent/
+venv/
+.venv/
+.vscode/
+.idea/
+*.log
+configs/*.config
+!configs/acmatvirus.config
