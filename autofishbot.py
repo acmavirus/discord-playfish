@@ -6,6 +6,7 @@ from websocket import WebSocketConnectionClosedException
 from threading import Thread
 from time import sleep, time
 from random import random, uniform
+import sys
 
 
 @dataclass(slots=True)
@@ -127,7 +128,7 @@ class Receiver:
                 else:
                     #No detection while regenerating
                     debugger.log(self, f'{self.name} - run (No detection while regenerating)')
-                    exit()
+                    sys.exit()
             else:
                 if self.captcha.detect(self.event):
                     self.menu.notify('[!] Captcha detected !', NotificationPriority.NORMAL)
@@ -211,7 +212,7 @@ class Receiver:
                             pass
 
         self.is_ready = False
-        exit()
+        sys.exit()
         
 @dataclass(slots=True)
 class Dispatcher:
@@ -428,4 +429,4 @@ if __name__ == "__main__":
         sleep(3)
 
     session.disconnect()
-    exit(f'\n[!] User exited.')
+    sys.exit(f'\n[!] User exited.')

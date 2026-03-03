@@ -88,7 +88,7 @@ class ConfigManager:
         if len(argv) >= 2:
             if argv[1] == '--create':
                 self.create_config()
-                exit()
+                sys.exit()
         if self._configs != []:
             if len(self._configs) > 1:
                 selected = self.choice_dialog()
@@ -114,14 +114,14 @@ class ConfigManager:
             cosmetics = cfg['COSMETIC']
         except KeyError as e:
             self.err_dialog(f'[E] Outdated config file.\nTIP: You can use "python autofishbot.py --create" to create a new one at any time.')
-            exit(1)
+            sys.exit(1)
             
         try:
             #System
             self.user_token = self.to_str(system['user_token'], field='USER_TOKEN')
             self.user_cooldown = self.to_float(system['user_cooldown'], field='USER_COOLDOWN')
             self.channel_id = self.to_str(system['channel_id'], field='CHANNEL_ID')
-            self.guild_id = self.to_str(system['guild_id'], field='GUILD_ID')
+            self.guild_id = self.to_str(system.get('guild_id', ''), field='GUILD_ID', required=False)
             self.debug = self.to_bool(system['debug'])
             
             #Captcha
@@ -163,7 +163,7 @@ class ConfigManager:
                 OutsideBoundariesError, 
                 GenericException, 
                 ValueError) as e:
-            exit(f'[E] Err -> {e}')
+            sys.exit(f'[E] Err -> {e}')
             
     def create_config(self) -> None:
         '''Creates a new config file.'''
@@ -223,7 +223,7 @@ class ConfigManager:
                 print('[!] Invalid name, a new name will be used instead.')
                 cfg_name = self.make_name()
         except KeyboardInterrupt:
-            exit(f'\n[!] User exited.')
+            sys.exit(f'\n[!] User exited.')
 
         try:
             cfg_name += '.config'
@@ -309,12 +309,12 @@ class ConfigManager:
             if input(f'[?] Do you want to create a new config ? (y/n) ').lower() == 'y':
                 self.create_config()
             else: 
-                exit(f'[!] User exited.')
+                sys.exit(f'[!] User exited.')
         except KeyboardInterrupt: 
-            exit(f'\n[!] User exited.')
+            sys.exit(f'\n[!] User exited.')
         except Exception as e: 
             #debugger.debug(e, 'Exception')
-            exit(f'\n[!] User exited ({e}).')
+            sys.exit(f'\n[!] User exited ({e}).')
     
     def choice_dialog(self) -> str:
         '''Choosing dialog to select one config.'''
@@ -342,7 +342,7 @@ class ConfigManager:
                 else: 
                     raise GenericException(f'Invalid choice. {index} is outside the scope.')
             except KeyboardInterrupt:
-                exit('\n[!] User exited.')
+                sys.exit('\n[!] User exited.')
             except Exception as e:
                 print(f'[E] Try again. Err -> {e}')
     

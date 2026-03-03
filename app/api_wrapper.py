@@ -13,6 +13,7 @@ from string import digits, ascii_letters
 from json import loads, dumps
 from threading import Thread
 from platform import uname
+import sys
 
 
 #------------------------ CONSTANTS --------------------------#
@@ -141,7 +142,7 @@ class Proxy:
             except exceptions.ReadTimeout:
                 print(f'[!] Attempt timed out ({self._max_timeout}. Consider using a faster proxy.')
             except KeyboardInterrupt:
-                exit(f'\n[!] User exited during proxy validation.')
+                sys.exit(f'\n[!] User exited during proxy validation.')
             except Exception as e:
                 debugger.log(e, f'{self.name} - validate')
                 print(f'[E] Proxy validation unknown error -> {e}')
@@ -238,7 +239,7 @@ class DiscordWrapper:
         #Discord
         self.session_id = self.make_session()
         self.endpoints = ApiEndpoints(self.channel_id, self.guild_id)
-        self.commands = self.load_commands()
+        self.commands = [] # Will be loaded after connection
         
         self.device = ""
 
@@ -368,6 +369,7 @@ class DiscordWrapper:
         if not category:
             category = COMMAND
 
+        data = None  # Initialize to prevent UnboundLocalError for non-post requests
         try:
             match method:
                 case 'post':
@@ -438,10 +440,10 @@ class DiscordWrapper:
                         else:
                             #Global resource limitation (rare)
                             message = response['message']
-                            exit('[E] 429 (Global): ', message, data)
+                            sys.exit(f'[E] 429 (Global): {message} | Data: {data}')
                     except (KeyError, TypeError, ValueError) as e:
                         debugger.log(e, f'{self.name} 429')
-                        exit('[E] 429: ', e)
+                        sys.exit(f'[E] 429: {e} | Response: {response}')
                 else:
                     #Gateway unavailable
                     self.menu.notify(f'[!] Gateway unavailable: {status_code}. Waiting 30 seconds.')
@@ -450,38 +452,73 @@ class DiscordWrapper:
             else:
                 #Critical, debug and exit  
                 debugger.log(data, f'{self.name} {status_code}')
-                exit(status_code)
+                if status_code in [403, 404]:
+                    return None
+                sys.exit(f'[E] Critical HTTP error: {status_code}')
         else:
             #201 and 204 - Successfull interactions
             return True
 
     def load_guild_id(self) -> str:
         '''Checks the READY event and returns the guild id (if found).'''
-        while not self.guild_id:
+        print(f'[*] Searching for guild_id associated with channel {self.channel_id}...')
+        while True:
             event = self.receive_event()
             if event['t'] == 'READY':
                 #Guild Structure
+                found_guilds = []
                 for guild in event['d']['guilds']:
-                    for channel in guild['channels']:
+                    g_id = str(guild['id'])
+                    found_guilds.append(g_id)
+                    # Note: READY event 'guilds' might not have channels for all guilds if they are large
+                    # and require lazy loading, but typically our target guild is there.
+                    for channel in guild.get('channels', []):
                         if str(channel['id']) == self.channel_id:
-                            return str(guild['id'])
-                exit('[E] Incorrect channel id.')
+                            print(f'[*] Found guild_id: {g_id}')
+                            return g_id
+                
+                # If not found in channels, maybe search in another way or just print what we saw
+                print(f'[!] Channel {self.channel_id} not found in READY event guilds. Seen guilds: {found_guilds}')
+                if self.guild_id:
+                    print(f'[*] Using guild_id from config: {self.guild_id}')
+                    return self.guild_id
+                sys.exit('[E] Incorrect channel id or bot is not in the guild.')
             else:
                 pass
 
-    def load_commands(self) -> list:
+    def load_commands(self, _retries: int = 2) -> list:
         '''Searchs for the application commands from a given channel.'''
         #Todo: make this class dynamically create commands (currently at scheduler)
-        try:
-            #This request will retrieve the whole list of commands according to the discord newest api update
-            content = self.request(endpoint=self.endpoints.application_commands, method='get')
-            
-            #This line will filter out commands that doesnt belong to VF
-            content = [obj for obj in content['application_commands'] if obj["application_id"] == APPLICATION_ID]
-            return content
-        except Exception as e:
-            debugger.log(e, f'{self.name} - load_commands')
-            return []
+        for attempt in range(_retries):
+            try:
+                url = self.endpoints.application_commands
+                #This request will retrieve the whole list of commands according to the discord newest api update
+                content = self.request(endpoint=url, method='get')
+                
+                if not content or not isinstance(content, dict):
+                    print(f'[!] load_commands: Invalid response (attempt {attempt + 1}/{_retries})')
+                    if attempt < _retries - 1:
+                        sleep(3)
+                    continue
+                
+                #This line will filter out commands that doesnt belong to VF
+                commands = [obj for obj in content.get('application_commands', []) if obj.get('application_id') == APPLICATION_ID]
+                
+                if not commands:
+                    print(f'[!] load_commands: No commands found for APPLICATION_ID (attempt {attempt + 1}/{_retries})')
+                    if attempt < _retries - 1:
+                        sleep(3)
+                    continue
+                
+                return commands
+            except Exception as e:
+                debugger.log(e, f'{self.name} - load_commands (attempt {attempt + 1})')
+                print(f'[!] load_commands failed (attempt {attempt + 1}/{_retries}): {e}')
+                if attempt < _retries - 1:
+                    sleep(3)
+        
+        print('[!] WARNING: Failed to load commands after all retries. Slash commands might NOT work, but button interactions should still work.')
+        return []
     
     #----------------------------------GATEWAY----------------------------------#
     def receive_event(self) -> dict:
@@ -519,17 +556,21 @@ class DiscordWrapper:
             self.ws.send(dumps(self.passport))
             
             #Load the guild id
-            if not self.guild_id:
-                self.guild_id = self.load_guild_id()
+            self.guild_id = self.load_guild_id()
             
             self.is_ready = True
             if not self.is_reconnecting:
                 print('[*] Session stablished !')
+            
+            #Load commands now that we have guild_id and connection
+            self.endpoints = ApiEndpoints(self.channel_id, self.guild_id)
+            self.commands = self.load_commands()
+            
             return True
         except Exception as e:
             #Failed to connect.
             debugger.log(f'{e} : {self}', f'{self.name} - connect')
-            exit(e)
+            sys.exit(str(e))
  
     
     def reconnect(self) -> bool:
@@ -537,7 +578,7 @@ class DiscordWrapper:
         self.is_reconnecting = True
         if self.is_connected:
             if not self.disconnect():
-                exit("[E] Failed to reconnect.")
+                sys.exit("[E] Failed to reconnect.")
 
         #Wait heartbeat cycle
         if self._beating:
@@ -555,7 +596,7 @@ class DiscordWrapper:
             self.is_reconnecting = False
             return True
         else:
-            exit("Failed to reconnect.")
+            sys.exit("Failed to reconnect.")
 
     def disconnect(self) -> bool:
         '''Disconnects completly from the gateway'''

@@ -13,6 +13,7 @@ from threading import Thread
 from os import path
 from re import sub
 import json
+import sys
 
 #------------------------ CONSTANTS --------------------------#
 MENUART = [ ' ___        _         ___  _      _     ___       _   ',
@@ -223,7 +224,7 @@ class BaseMenu:
         try:
             curses.wrapper(self.__run__, threads)
         except curses.error as e:
-            exit(f'[E] {self.name} err: {e}')
+            sys.exit(f'[E] {self.name} err: {e}')
     
     def kill(self) -> None:
         '''Kills the menu activity.'''
@@ -490,7 +491,7 @@ class BaseMenu:
                 if not thread.is_alive():
                     self.kill()
                     curses.endwin()
-                    exit(f'[E] "{thread.name}" thread exited.')
+                    sys.exit(f'[E] "{thread.name}" thread exited.')
             try:
                 stdscr.refresh()
                 stdscr.erase()
@@ -559,7 +560,7 @@ class MainMenu(BaseMenu):
                 if not thread.is_alive():
                     self.kill()
                     curses.endwin()
-                    exit(f'[E] "{thread.name}" thread exited.')
+                    sys.exit(f'[E] "{thread.name}" thread exited.')
             try:
                 stdscr.refresh()
                 stdscr.erase()
@@ -693,7 +694,7 @@ class CompactMenu(BaseMenu):
                 if not thread.is_alive():
                     self.kill()
                     curses.endwin()
-                    exit(f'[E] "{thread.name}" thread exited.')
+                    sys.exit(f'[E] "{thread.name}" thread exited.')
             try:
                 stdscr.refresh()
                 stdscr.erase()
